@@ -26,6 +26,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
 <details> <summary> <b> Supported Public Trackers </b> </summary>
 
  * 1337x
+ * 7torrents
  * ACG.RIP
  * ACGsou
  * Anidex
@@ -73,6 +74,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * LePorno
  * LimeTorrents
  * MacTorrents
+ * Magnet4You
  * MagnetDL
  * MejorTorrent <!-- maintained by ivandelabeldad -->
  * Monova
@@ -87,6 +89,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * Nyaa-Pantsu
  * OxTorrent
  * PiratBit
+ * Pirateiro
  * ProStyleX
  * RARBG
  * Rus-media
@@ -105,6 +108,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * Torlock
  * TOROS
  * Torrent Downloads (TD)
+ * Torrent4You
  * Torrent9
  * Torrent9Clone
  * TorrentDownload
@@ -144,6 +148,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * HamsterStudio
  * HD Dolby
  * Kinozal
+ * Korsar
  * LostFilm.tv
  * Marine Tracker
  * Metal Tracker
@@ -350,6 +355,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * Orpheus
  * Ourbits (HDPter)
  * P2PBG
+ * P2PElite
  * Partis
  * PassThePopcorn (PTP)
  * Peers.FM
@@ -452,6 +458,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * TV-Vault
  * TVstore
  * Twilight Torrents
+ * Twilights Zoom
  * u-torrents (SceneFZ)
  * UHDBits
  * UnionGang
