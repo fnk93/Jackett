@@ -6,7 +6,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CsQuery;
+using AngleSharp.Html.Parser;
 using Jackett.Common.Models;
 using Jackett.Common.Models.IndexerConfig;
 using Jackett.Common.Services.Interfaces;
@@ -19,17 +19,18 @@ namespace Jackett.Common.Indexers
 {
     public class TorrentLeech : BaseWebIndexer
     {
-        public override string[] LegacySiteLinks { get; protected set; } = new string[] {
+        public override string[] LegacySiteLinks { get; protected set; } =
+        {
             "https://v4.torrentleech.org/",
         };
 
-        private string LoginUrl { get { return SiteLink + "user/account/login/"; } }
-        private string SearchUrl { get { return SiteLink + "torrents/browse/list/"; } }
+        private string LoginUrl => SiteLink + "user/account/login/";
+        private string SearchUrl => SiteLink + "torrents/browse/list/";
 
         private new ConfigurationDataRecaptchaLogin configData
         {
-            get { return (ConfigurationDataRecaptchaLogin)base.configData; }
-            set { base.configData = value; }
+            get => (ConfigurationDataRecaptchaLogin)base.configData;
+            set => base.configData = value;
         }
 
         public TorrentLeech(IIndexerConfigurationService configService, Utils.Clients.WebClient wc, Logger l, IProtectionService ps)
@@ -44,9 +45,11 @@ namespace Jackett.Common.Indexers
                 downloadBase: "https://www.torrentleech.org/download/",
                 configData: new ConfigurationDataRecaptchaLogin("For best results, change the 'Default Number of Torrents per Page' setting to the maximum in your profile on the TorrentLeech webpage."))
         {
-            Encoding = Encoding.GetEncoding("iso-8859-1");
+            Encoding = Encoding.UTF8;
             Language = "en-us";
             Type = "private";
+            TorznabCaps.SupportsImdbMovieSearch = true;
+            TorznabCaps.SupportsImdbTVSearch = true;
 
             AddCategoryMapping(8, TorznabCatType.MoviesSD); // cam
             AddCategoryMapping(9, TorznabCatType.MoviesSD); //ts
@@ -101,13 +104,14 @@ namespace Jackett.Common.Indexers
         public override async Task<ConfigurationData> GetConfigurationForSetup()
         {
             var loginPage = await RequestStringWithCookies(LoginUrl, string.Empty);
-            CQ cq = loginPage.Content;
-            var captcha = cq.Find(".g-recaptcha");
-            if (captcha.Any())
+            var parser = new HtmlParser();
+            var dom = parser.ParseDocument(loginPage.Content);
+            var captcha = dom.QuerySelector(".g-recaptcha");
+            if (captcha != null)
             {
                 var result = configData;
                 result.CookieHeader.Value = loginPage.Cookies;
-                result.Captcha.SiteKey = captcha.Attr("data-sitekey");
+                result.Captcha.SiteKey = captcha.GetAttribute("data-sitekey");
                 result.Captcha.Version = "2";
                 return result;
             }
@@ -126,11 +130,6 @@ namespace Jackett.Common.Indexers
         public override async Task<IndexerConfigurationStatus> ApplyConfiguration(JToken configJson)
         {
             LoadValuesFromJson(configJson);
-            var pairs = new Dictionary<string, string> {
-                { "username", configData.Username.Value },
-                { "password", configData.Password.Value },
-                { "g-recaptcha-response", configData.Captcha.Value }
-            };
 
             if (!string.IsNullOrWhiteSpace(configData.Captcha.Cookie))
             {
@@ -138,10 +137,8 @@ namespace Jackett.Common.Indexers
                 try
                 {
                     var results = await PerformQuery(new TorznabQuery());
-                    if (results.Count() == 0)
-                    {
+                    if (!results.Any())
                         throw new Exception("Your cookie did not work");
-                    }
 
                     IsConfigured = true;
                     SaveConfig();
@@ -168,8 +165,9 @@ namespace Jackett.Common.Indexers
             var result = await RequestLoginAndFollowRedirect(LoginUrl, pairs, null, true, null, LoginUrl);
             await ConfigureIfOK(result.Cookies, result.Content != null && result.Content.Contains("/user/account/logout"), () =>
             {
-                CQ dom = result.Content;
-                var errorMessage = dom["p.text-danger:contains(\"Error:\")"].Text().Trim();
+                var parser = new HtmlParser();
+                var dom = parser.ParseDocument(result.Content);
+                var errorMessage = dom.QuerySelector("p.text-danger:contains(\"Error:\")").TextContent.Trim();
                 throw new ExceptionWithConfigData(errorMessage, configData);
             });
         }
@@ -180,8 +178,13 @@ namespace Jackett.Common.Indexers
             var searchString = query.GetQueryString();
             searchString = Regex.Replace(searchString, @"(^|\s)-", " "); // remove dashes at the beginning of keywords as they exclude search strings (see issue #3096)
             var searchUrl = SearchUrl;
+            var imdbId = ParseUtil.GetFullImdbID(query.ImdbID);
 
-            if (!string.IsNullOrWhiteSpace(searchString))
+            if (imdbId != null)
+            {
+                searchUrl += "imdbID/" + imdbId + "/";
+            }
+            else if (!string.IsNullOrWhiteSpace(searchString))
             {
                 searchUrl += "query/" + WebUtility.UrlEncode(searchString) + "/";
             }
@@ -245,12 +248,12 @@ namespace Jackett.Common.Indexers
 
                     release.Imdb = ParseUtil.GetImdbID(torrent.imdbID.ToString());
 
-                    release.DownloadVolumeFactor = 1;
                     release.UploadVolumeFactor = 1;
 
-                    // freeleech #6579 #6624
-
-                    release.DownloadVolumeFactor = ParseUtil.CoerceInt(torrent.download_multiplier.ToString());
+                    // freeleech #6579 #6624 #7367
+                    release.DownloadVolumeFactor = string.IsNullOrEmpty(torrent.download_multiplier.ToString()) ?
+                        1 :
+                        ParseUtil.CoerceInt(torrent.download_multiplier.ToString());
 
                     releases.Add(release);
                 }

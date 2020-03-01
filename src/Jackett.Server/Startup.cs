@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Autofac;
@@ -28,10 +29,7 @@ namespace Jackett.Server
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+        public Startup(IConfiguration configuration) => Configuration = configuration;
 
         public IConfiguration Configuration { get; }
 
@@ -48,35 +46,25 @@ namespace Jackett.Server
                             options.AccessDeniedPath = new PathString("/UI/Login");
                             options.LogoutPath = new PathString("/UI/Logout");
                             options.Cookie.Name = "Jackett";
-                            options.Cookie.SameSite = SameSiteMode.None;
                         });
 
 
 
 #if NET461
-            services.AddMvc(config =>
-                    {
-                        var policy = new AuthorizationPolicyBuilder()
-                                            .RequireAuthenticatedUser()
-                                            .Build();
-                        config.Filters.Add(new AuthorizeFilter(policy));
-                    })
-                    .AddJsonOptions(options =>
-                    {
-                        options.SerializerSettings.ContractResolver = new DefaultContractResolver(); //Web app uses Pascal Case JSON
-                    });
+            services.AddMvc(
+                        config => config.Filters.Add(
+                            new AuthorizeFilter(
+                                new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())))
+                    .AddJsonOptions(options => options.SerializerSettings.ContractResolver =
+                                        new DefaultContractResolver()); //Web app uses Pascal Case JSON);
 #else
-            services.AddControllers(config =>
-                    {
-                        var policy = new AuthorizationPolicyBuilder()
-                                            .RequireAuthenticatedUser()
-                                            .Build();
-                        config.Filters.Add(new AuthorizeFilter(policy));
-                    })
-                    .AddNewtonsoftJson(options =>
-                    {
-                        options.SerializerSettings.ContractResolver = new DefaultContractResolver(); //Web app uses Pascal Case JSON
-                    });
+
+            services.AddControllers(
+                        config => config.Filters.Add(
+                            new AuthorizeFilter(
+                                new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())))
+                    .AddNewtonsoftJson(
+                        options => options.SerializerSettings.ContractResolver = new DefaultContractResolver());
 #endif
 
             var runtimeSettings = new RuntimeSettings();
@@ -116,7 +104,8 @@ namespace Jackett.Server
 #if NET461
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime applicationLifetime)
         {
-            applicationLifetime.ApplicationStopping.Register(OnShutdown);
+            applicationLifetime.ApplicationStarted.Register(OnStarted);
+            applicationLifetime.ApplicationStopped.Register(OnStopped);
             Helper.applicationLifetime = applicationLifetime;
             app.UseResponseCompression();
 
@@ -155,7 +144,8 @@ namespace Jackett.Server
 #else
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime applicationLifetime)
         {
-            applicationLifetime.ApplicationStopping.Register(OnShutdown);
+            applicationLifetime.ApplicationStarted.Register(OnStarted);
+            applicationLifetime.ApplicationStopped.Register(OnStopped);
             Helper.applicationLifetime = applicationLifetime;
             app.UseResponseCompression();
 
@@ -191,18 +181,16 @@ namespace Jackett.Server
 
             app.UseRouting();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => endpoints.MapControllers());
         }
 #endif
 
-
-
-        private void OnShutdown()
+        private static void OnStarted()
         {
-            //this code is called when the application stops
+            var elapsed = (DateTime.Now - Process.GetCurrentProcess().StartTime).TotalSeconds;
+            Helper.Logger.Info($"Jackett startup finished in {elapsed:0.000} s");
         }
+
+        private static void OnStopped() => Helper.Logger.Info($"Jackett stopped");
     }
 }

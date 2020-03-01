@@ -104,8 +104,7 @@ namespace Jackett.Common.Services
                 var files = existingDirectories.SelectMany(d => d.GetFiles("*.yml"));
                 var definitions = files.Select(file =>
                 {
-                    logger.Info("Loading Cardigann definition " + file.FullName);
-
+                    logger.Debug("Loading Cardigann definition " + file.FullName);
                     try
                     {
                         var DefinitionString = File.ReadAllText(file.FullName);
@@ -147,6 +146,7 @@ namespace Jackett.Common.Services
 
                     indexers.Add(indexer.ID, indexer);
                 }
+                logger.Info("Cardigann definitions loaded: " + string.Join(", ", indexers.Keys));
             }
             catch (Exception ex)
             {
@@ -208,10 +208,7 @@ namespace Jackett.Common.Services
             throw new Exception("Unknown indexer: " + name);
         }
 
-        public IEnumerable<IIndexer> GetAllIndexers()
-        {
-            return indexers.Values.OrderBy(_ => _.DisplayName);
-        }
+        public IEnumerable<IIndexer> GetAllIndexers() => indexers.Values.OrderBy(_ => _.DisplayName);
 
         public async Task TestIndexer(string name)
         {

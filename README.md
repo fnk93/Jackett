@@ -2,7 +2,6 @@
 
 [![GitHub issues](https://img.shields.io/github/issues/Jackett/Jackett.svg?maxAge=60&style=flat-square)](https://github.com/Jackett/Jackett/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/Jackett/Jackett.svg?maxAge=60&style=flat-square)](https://github.com/Jackett/Jackett/pulls)
-[![Build status](https://ci.appveyor.com/api/projects/status/gaybh5mvyx418nsp/branch/master?svg=true)](https://ci.appveyor.com/project/Jackett/jackett)
 [![Build Status](https://dev.azure.com/Jackett-project/Jackett/_apis/build/status/Jackett.Jackett?branchName=master)](https://dev.azure.com/Jackett-project/Jackett/_build/latest?definitionId=1&branchName=master)
 [![GitHub Releases](https://img.shields.io/github/downloads/Jackett/Jackett/total.svg?maxAge=60&style=flat-square)](https://github.com/Jackett/Jackett/releases/latest)
 [![Docker Pulls](https://img.shields.io/docker/pulls/linuxserver/jackett.svg?maxAge=60&style=flat-square)](https://hub.docker.com/r/linuxserver/jackett/)
@@ -39,6 +38,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * BitTorrent.AM
  * BTDB
  * BTDIGG
+ * BTeye
  * BT.etree
  * BTSOW
  * Cili180
@@ -81,6 +81,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * Monova
  * MovCr
  * MoviesDVDR
+ * MyPornClub
  * Newpct (aka: tvsinpagar, descargas2020, torrentlocura, torrentrapid, tumejortorrent, pctnew, etc)
  * Newstudio
  * Nitro
@@ -91,6 +92,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * OxTorrent
  * PiratBit
  * Pirateiro
+ * PornLeech
  * ProStyleX
  * RARBG
  * Rus-media
@@ -120,6 +122,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * TorrentProject2
  * TorrentQuest
  * Torrents.csv
+ * TorrentView
  * TorrentWal
  * Torrentz2
  * Underverse
@@ -142,8 +145,10 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * Deildu
  * DXP (Deaf Experts)
  * EniaHD
+ * Erzsebet
+ * ExKinoRay
  * ExtremlymTorrents
- * Film-Paleis
+ * FilmsClub
  * Gay-Torrents.net
  * Gay-Torrents.org
  * HamsterStudio
@@ -170,7 +175,6 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * Torrents-Local
  * TribalMixes
  * Union Fansub
- * Vanila
  * YggTorrent (YGG)
  * Ztracker
 </details>
@@ -219,6 +223,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * BJ-Share (BJ)
  * BlueBird
  * Blutopia (BLU)
+ * Boxing Torrents
  * Brasil Tracker
  * BroadcastTheNet (BTN)
  * BroadCity
@@ -260,6 +265,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * EbookParadijs
  * Ebooks-Shares
  * EfectoDoppler
+ * EggMeOn
  * Elite-Tracker
  * Empornium (EMP)
  * eShareNet
@@ -270,6 +276,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * FeedUrNeed (FuN)
  * Femdomcult
  * FileList (FL)
+ * Film-Paleis
  * FinVip
  * FocusX
  * FreeTorrent
@@ -455,6 +462,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * ToTheGlory
  * TranceTraffic
  * Trezzor
+ * TTsWEB
  * TurkTorrent (TT)
  * TV Chaos UK (TVCUK)
  * TV-Vault
@@ -462,6 +470,7 @@ Developer note: The software implements the [Torznab](https://github.com/Sonarr/
  * Twilight Torrents
  * Twilights Zoom
  * u-torrents (SceneFZ)
+ * U2 (U2分享園@動漫花園)
  * UHDBits
  * UnionGang
  * UnlimitZ

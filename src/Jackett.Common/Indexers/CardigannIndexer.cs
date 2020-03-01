@@ -26,7 +26,7 @@ namespace Jackett.Common.Indexers
     public class CardigannIndexer : BaseWebIndexer
     {
         protected IndexerDefinition Definition;
-        public override string ID { get { return (Definition != null ? Definition.Site : GetIndexerID(GetType())); } }
+        public override string ID => (Definition != null ? Definition.Site : GetIndexerID(GetType()));
 
         protected WebClientStringResult landingResult;
         protected IHtmlDocument landingResultDocument;
@@ -35,8 +35,8 @@ namespace Jackett.Common.Indexers
 
         private new ConfigurationData configData
         {
-            get { return base.configData; }
-            set { base.configData = value; }
+            get => base.configData;
+            set => base.configData = value;
         }
 
         protected readonly string[] OptionalFileds = new string[] { "imdb", "rageid", "tvdbid", "banner" };
@@ -117,6 +117,14 @@ namespace Jackett.Common.Indexers
                         case "password":
                         case "text":
                             item = new StringItem { Value = Setting.Default };
+                            break;
+                        case "multi-select":
+                            if (Setting.Options == null)
+                            {
+                                throw new Exception("Options must be given for the 'multi-select' type.");
+                            }
+
+                            item = new CheckboxItem(Setting.Options) { Values = Setting.Defaults };
                             break;
                         case "select":
                             if (Setting.Options == null)
@@ -201,21 +209,30 @@ namespace Jackett.Common.Indexers
             variables[".Config.sitelink"] = SiteLink;
             foreach (var Setting in Definition.Settings)
             {
-                string value;
                 var item = configData.GetDynamic(Setting.Name);
-                if (item.GetType() == typeof(BoolItem))
+
+                // CheckBox item is an array of strings
+                if (item.GetType() == typeof(CheckboxItem))
                 {
-                    value = (((BoolItem)item).Value == true ? "true" : "");
-                }
-                else if (item.GetType() == typeof(SelectItem))
-                {
-                    value = ((SelectItem)item).Value;
+                    variables[".Config." + Setting.Name] = ((CheckboxItem)item).Values;
                 }
                 else
                 {
-                    value = ((StringItem)item).Value;
+                    string value;
+                    if (item.GetType() == typeof(BoolItem))
+                    {
+                        value = (((BoolItem)item).Value == true ? "true" : "");
+                    }
+                    else if (item.GetType() == typeof(SelectItem))
+                    {
+                        value = ((SelectItem)item).Value;
+                    }
+                    else
+                    {
+                        value = ((StringItem)item).Value;
+                    }
+                    variables[".Config." + Setting.Name] = value;
                 }
-                variables[".Config." + Setting.Name] = value;
             }
             return variables;
         }
@@ -747,15 +764,9 @@ namespace Jackett.Common.Indexers
             return null;
         }
 
-        protected string getRedirectDomainHint(WebClientByteResult result)
-        {
-            return getRedirectDomainHint(result.Request.Url, result.RedirectingTo);
-        }
+        protected string getRedirectDomainHint(WebClientByteResult result) => getRedirectDomainHint(result.Request.Url, result.RedirectingTo);
 
-        protected string getRedirectDomainHint(WebClientStringResult result)
-        {
-            return getRedirectDomainHint(result.Request.Url, result.RedirectingTo);
-        }
+        protected string getRedirectDomainHint(WebClientStringResult result) => getRedirectDomainHint(result.Request.Url, result.RedirectingTo);
 
         protected async Task<bool> TestLogin()
         {
@@ -1171,13 +1182,7 @@ namespace Jackett.Common.Indexers
             return applyFilters(ParseUtil.NormalizeSpace(value), Selector.Filters, variables);
         }
 
-        protected Uri resolvePath(string path, Uri currentUrl = null)
-        {
-            if (currentUrl == null)
-                currentUrl = new Uri(SiteLink);
-
-            return new Uri(currentUrl, path);
-        }
+        protected Uri resolvePath(string path, Uri currentUrl = null) => new Uri(currentUrl ?? new Uri(SiteLink), path);
 
         protected override async Task<IEnumerable<ReleaseInfo>> PerformQuery(TorznabQuery query)
         {
@@ -1235,7 +1240,7 @@ namespace Jackett.Common.Indexers
             variables[".Query.Keywords"] = string.Join(" ", KeywordTokens);
             variables[".Keywords"] = applyFilters((string)variables[".Query.Keywords"], Search.Keywordsfilters);
 
-            // TODO: prepare queries first and then send them parallel 
+            // TODO: prepare queries first and then send them parallel
             var SearchPaths = Search.Paths;
             foreach (var SearchPath in SearchPaths)
             {

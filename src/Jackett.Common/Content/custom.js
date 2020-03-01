@@ -32,7 +32,15 @@ $(document).ready(function () {
 	        return opts.fn(this);
 	    else
 	        return opts.inverse(this);
-	});
+    });
+
+    Handlebars.registerHelper('if_in', function(elem, list, opts) {
+        if(list.indexOf(elem) > -1) {
+            return opts.fn(this);
+        }
+
+        return opts.inverse(this);
+    });
 
     var index = window.location.pathname.indexOf("/UI");
     var pathPrefix = window.location.pathname.substr(0, index);
@@ -43,7 +51,12 @@ $(document).ready(function () {
 });
 
 function openSearchIfNecessary() {
-    const hashArgs = location.hash.substring(1).split('&').reduce((prev, item) => Object.assign({ [item.split('=')[0]]: (item.split('=').length < 2 ? undefined : decodeURIComponent(item.split('=')[1])) }, prev), {});
+    const hashArgs = location.hash.substring(1).split('&').reduce((prev, item) =>
+      Object.assign({
+        [item.split('=')[0]]: (item.split('=').length < 2 ?
+          undefined :
+          decodeURIComponent(item.split('=')[1].replace(/\+/g,'%20')))
+      }, prev), {});
     if ("search" in hashArgs) {
         showSearch(hashArgs.tracker, hashArgs.search, hashArgs.category);
     }
@@ -228,9 +241,9 @@ function displayUnconfiguredIndexersList() {
 			        }).fail(function (data) {
                 if(data.responseJSON.error !== undefined) {
                   var indexEnd = 2048 - "https://github.com/Jackett/Jackett/issues/new?title=[".length - indexerId.length - "] ".length - " (Config)".length; // keep url <= 2k #5104
-                  doNotify("An error occured while configuring this indexer<br /><b>" + data.responseJSON.error.substring(0, indexEnd) + "</b><br /><i><a href=\"https://github.com/Jackett/Jackett/issues/new?title=[" + indexerId + "] " + data.responseJSON.error.substring(0, indexEnd) + " (Config)\" target=\"_blank\">Click here to open an issue on GitHub for this indexer.</a><i>", "danger", "glyphicon glyphicon-alert", false);
+                  doNotify("An error occurred while configuring this indexer<br /><b>" + data.responseJSON.error.substring(0, indexEnd) + "</b><br /><i><a href=\"https://github.com/Jackett/Jackett/issues/new?title=[" + indexerId + "] " + data.responseJSON.error.substring(0, indexEnd) + " (Config)\" target=\"_blank\">Click here to open an issue on GitHub for this indexer.</a><i>", "danger", "glyphicon glyphicon-alert", false);
                 } else {
-                  doNotify("An error occured while configuring this indexer, is Jackett server running ?", "danger", "glyphicon glyphicon-alert");
+                  doNotify("An error occurred while configuring this indexer, is Jackett server running ?", "danger", "glyphicon glyphicon-alert");
                 }
 			        });
                 });
@@ -608,6 +621,11 @@ function getConfigModalJson(configForm) {
             case "inputbool":
                 itemEntry.value = $el.find(".setup-item-inputbool input").is(":checked");
                 break;
+            case "inputcheckbox":
+                itemEntry.values = [];
+                $el.find(".setup-item-inputcheckbox input:checked").each(function () {
+                  itemEntry.values.push($(this).val());
+                });
             case "inputselect":
                 itemEntry.value = $el.find(".setup-item-inputselect select").val();
                 break;
@@ -762,7 +780,7 @@ function updateReleasesRow(row)
 }
 
 function showSearch(selectedIndexer, query, category) {
-    var selectedIndexers = []
+    var selectedIndexers = [];
     if (selectedIndexer)
         selectedIndexers = selectedIndexer.split(",");
     $('#select-indexer-modal').remove();
@@ -829,7 +847,11 @@ function showSearch(selectedIndexer, query, category) {
             Tracker: releaseDialog.find('#searchTracker').val()
         };
 
-        window.location.hash = $.param({ search: queryObj.Query, tracker: queryObj.Tracker.join(","), category: queryObj.Category.join(",") });
+        window.location.hash = Object.entries({
+          search: encodeURIComponent(queryObj.Query).replace(/%20/g,'+'),
+          tracker: queryObj.Tracker.join(","),
+          category: queryObj.Category.join(",")
+        }).map(([k, v], i) => k + '=' + v).join('&');
 
         $('#jackett-search-perform').html($('#spinner').html());
         $('#searchResults div.dataTables_filter input').val("");
@@ -877,7 +899,7 @@ function showSearch(selectedIndexer, query, category) {
         enableCaseInsensitiveFiltering: true,
         nonSelectedText: 'All'
     });
-    
+
 
     if (category !== undefined) {
         searchCategory.val(category.split(","));
@@ -1155,8 +1177,8 @@ function bindUIButtons() {
         var jackett_port = Number($("#jackett-port").val());
         var jackett_basepathoverride = $("#jackett-basepathoverride").val();
         var jackett_external = $("#jackett-allowext").is(':checked');
-        var jackett_update = $("#jackett-allowupdate").is(':checked'); 
-        var jackett_prerelease = $("#jackett-prerelease").is(':checked'); 
+        var jackett_update = $("#jackett-allowupdate").is(':checked');
+        var jackett_prerelease = $("#jackett-prerelease").is(':checked');
         var jackett_logging = $("#jackett-logging").is(':checked');
         var jackett_omdb_key = $("#jackett-omdbkey").val();
         var jackett_omdb_url = $("#jackett-omdburl").val();

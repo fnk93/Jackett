@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
 using AngleSharp.Html.Parser;
-using CsQuery;
 using Jackett.Common.Models;
 using Jackett.Common.Models.IndexerConfig;
 using Jackett.Common.Services.Interfaces;
@@ -18,13 +17,13 @@ namespace Jackett.Common.Indexers
 {
     public class Partis : BaseWebIndexer
     {
-        private string LoginUrl { get { return SiteLink + "user/login/"; } }
-        private string SearchUrl { get { return SiteLink + "torrent/show/"; } }
+        private string LoginUrl => SiteLink + "user/login/";
+        private string SearchUrl => SiteLink + "torrent/show/";
 
         private new ConfigurationDataBasicLogin configData
         {
-            get { return (ConfigurationDataBasicLogin)base.configData; }
-            set { base.configData = value; }
+            get => (ConfigurationDataBasicLogin)base.configData;
+            set => base.configData = value;
         }
 
         public Partis(IIndexerConfigurationService configService, WebClient wc, Logger l, IProtectionService ps)
@@ -101,8 +100,9 @@ namespace Jackett.Common.Indexers
             var result = await RequestLoginAndFollowRedirect(LoginUrl, pairs, string.Empty, false, null, null, true);
             await ConfigureIfOK(result.Cookies, result.Content != null && result.Content.Contains("/odjava"), () =>
             {
-                CQ dom = result.Content;
-                var errorMessage = dom["div.obvet > span.najvecji"].Text().Trim(); // Prijava ni uspela! obvestilo
+                var parser = new HtmlParser();
+                var dom = parser.ParseDocument(result.Content);
+                var errorMessage = dom.QuerySelector("div.obvet > span.najvecji").TextContent.Trim(); // Prijava ni uspela! obvestilo
                 throw new ExceptionWithConfigData(errorMessage, configData);
             });
             return IndexerConfigurationStatus.RequiresTesting;
@@ -141,7 +141,7 @@ namespace Jackett.Common.Indexers
             results = await RequestStringWithCookies(searchUrl, null, SearchUrl, heder);
             await FollowIfRedirect(results, null, null, null, true);
 
-            /// are we logged in?
+            // are we logged in?
             if (!results.Content.Contains("/odjava"))
             {
                 await ApplyConfiguration(null);

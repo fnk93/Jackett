@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CsQuery;
+using AngleSharp.Html.Parser;
 using Jackett.Common.Models;
 using Jackett.Common.Models.IndexerConfig.Bespoke;
 using Jackett.Common.Services.Interfaces;
@@ -19,18 +19,18 @@ namespace Jackett.Common.Indexers
     public class TVstore : BaseWebIndexer
     {
 
-        private string LoginUrl { get { return SiteLink + "takelogin.php"; } }
-        private string LoginPageUrl { get { return SiteLink + "login.php?returnto=%2F"; } }
-        private string SearchUrl { get { return SiteLink + "torrent/br_process.php"; } }
-        private string DownloadUrl { get { return SiteLink + "torrent/download.php"; } }
-        private string BrowseUrl { get { return SiteLink + "torrent/browse.php"; } }
+        private string LoginUrl => SiteLink + "takelogin.php";
+        private string LoginPageUrl => SiteLink + "login.php?returnto=%2F";
+        private string SearchUrl => SiteLink + "torrent/br_process.php";
+        private string DownloadUrl => SiteLink + "torrent/download.php";
+        private string BrowseUrl => SiteLink + "torrent/browse.php";
         private readonly List<SeriesDetail> series = new List<SeriesDetail>();
         private readonly Regex _searchStringRegex = new Regex(@"(.+?)S0?(\d+)(E0?(\d+))?$", RegexOptions.IgnoreCase);
 
         private new ConfigurationDataTVstore configData
         {
-            get { return (ConfigurationDataTVstore)base.configData; }
-            set { base.configData = value; }
+            get => (ConfigurationDataTVstore)base.configData;
+            set => base.configData = value;
         }
 
         public TVstore(IIndexerConfigurationService configService, Utils.Clients.WebClient wc, Logger l, IProtectionService ps)
@@ -68,11 +68,8 @@ namespace Jackett.Common.Indexers
             };
 
             var result = await RequestLoginAndFollowRedirect(LoginUrl, pairs, loginPage.Cookies, true, referer: SiteLink);
-            await ConfigureIfOK(result.Cookies, result.Content != null && result.Content.Contains("Főoldal"), () =>
-            {
-                throw new ExceptionWithConfigData("Error while trying to login with: Username: " + configData.Username.Value +
-                                                  " Password: " + configData.Password.Value, configData);
-            });
+            await ConfigureIfOK(result.Cookies, result.Content?.Contains("Főoldal") == true, () => throw new ExceptionWithConfigData(
+                $"Error while trying to login with: Username: {configData.Username.Value} Password: {configData.Password.Value}", configData));
 
             return IndexerConfigurationStatus.RequiresTesting;
         }
@@ -129,8 +126,8 @@ namespace Jackett.Common.Indexers
                 var parameters = content.Split(new string[] { "\\" }, StringSplitOptions.None);
                 var type = "normal";
 
-                /* 
-                 * Split the releases by '\' and go through them. 
+                /*
+                 * Split the releases by '\' and go through them.
                  * 27 element belongs to one torrent
                  */
                 for (var j = previously_parsed_on_page * 27; (j + 27 < parameters.Length && ((already_found + releases.Count) < limit)); j = j + 27)
@@ -202,7 +199,7 @@ namespace Jackett.Common.Indexers
 
             return releases;
         }
-        /* Search is possible only based by Series ID. 
+        /* Search is possible only based by Series ID.
          * All known series ID is on main page, with their attributes. (ID, EngName, HunName, imdbid)
          */
 
@@ -218,11 +215,11 @@ namespace Jackett.Common.Indexers
         protected async Task<bool> GetSeriesInfo()
         {
 
-            var result = (await RequestStringWithCookiesAndRetry(BrowseUrl)).Content;
+            var result = await RequestStringWithCookiesAndRetry(BrowseUrl);
 
-            CQ dom = result;
-            var scripts = dom["script"];
-
+            var parser = new HtmlParser();
+            var dom = parser.ParseDocument(result.Content);
+            var scripts = dom.QuerySelectorAll("script");
             foreach (var script in scripts)
             {
                 if (script.TextContent.Contains("catsh=Array"))

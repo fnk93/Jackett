@@ -83,10 +83,7 @@ namespace Jackett.Common.Utils.Clients
             }
         }
 
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
+        public override int GetHashCode() => base.GetHashCode();
     }
 
     public enum RequestType

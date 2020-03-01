@@ -1,4 +1,4 @@
-﻿---
+---
   site: thefallingangels
   name: The Falling Angels
   description: "The Falling Angels (TFA) is a German Private site for TV / MOVIES / GENERAL"
@@ -206,11 +206,21 @@
           ":has(div.kat_cat_pic_name:contains(\"XXX\")):has(div.kat_cat_pic_name_b:contains(\"Pic\"))": 110
       title:
         selector: a.selection_a
+        filters:
+          - name: re_replace
+            args: ["^\\[[\\w ]*\\]\\s?", ""]
+          - name: re_replace
+            args: ["^\\[[\\w ]*\\]\\s?", ""]
       details:
         selector: a.selection_a
         attribute: href
       download:
         selector: a[href^="download.php?torrent="]
+        optional: true
+        attribute: href
+      download:
+        selector: a[href^="download_ssl.php?torrent="]
+        optional: true
         attribute: href
       banner:
         selector: div[id^="details"] img

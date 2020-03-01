@@ -94,11 +94,12 @@
         "asc": "asc"
 
   login:
-    path: tlogin.php
+    path: takelogin.php
     method: post
     inputs:
       username: "{{ .Config.username }}"
       password: "{{ .Config.password }}"
+      returnto: "/"
     error:
       - selector: table.main:contains("Login failed!")
         message:
@@ -169,5 +170,5 @@
           img[src="pic/freeleech.png"]: 0
           "*": 1
       uploadvolumefactor:
-        case:
-          "*": 1
+        text: 1
+# engine n/a

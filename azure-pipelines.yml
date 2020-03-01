@@ -321,24 +321,6 @@ stages:
             if [[ "$(artifactName)" == *"macOS"* ]]; then sudo ./install_service_macos; fi
             if [[ "$(artifactName)" == *"LinuxAMDx64"* ]]; then sudo ./install_service_systemd.sh; fi
 
-      #Remove this task once ChromeDriver is deployed to Ubuntu image https://github.com/actions/virtual-environments/issues/9
-      - task: Bash@3
-        displayName: Install ChromeDriver (Linux and Mono)
-        condition: and(succeeded(), eq(variables['imageName'], 'ubuntu-latest'))
-        inputs:
-          targetType: inline
-          script: |
-            CHROME_VERSION=$(google-chrome --version | cut -f 3 -d ' ' | cut -d '.' -f 1) \
-              && CHROMEDRIVER_RELEASE=$(curl --location --fail --retry 3 http://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}) \
-              && curl --silent --show-error --location --fail --retry 3 --output /tmp/chromedriver_linux64.zip "http://chromedriver.storage.googleapis.com/$CHROMEDRIVER_RELEASE/chromedriver_linux64.zip" \
-              && cd /tmp \
-              && unzip chromedriver_linux64.zip \
-              && rm -rf chromedriver_linux64.zip \
-              && sudo mv chromedriver /usr/local/bin/chromedriver \
-              && sudo chmod +x /usr/local/bin/chromedriver \
-              && chromedriver --version
-            echo "##vso[task.setvariable variable=CHROMEWEBDRIVER]/usr/local/bin"
-
       - task: UseDotNet@2
         displayName: Install .NET Core SDK
         inputs:
@@ -384,3 +366,24 @@ stages:
           isDraft: true
           addChangeLog: true
           compareWith: lastNonDraftRelease
+
+      - task: PowerShell@2
+        displayName: Ensure all artifacts are uploaded to Github
+        inputs:
+          targetType: inline
+          script: |
+            $json = Invoke-WebRequest 'https://dev.azure.com/jackett-project/jackett/_apis/build/builds/$(Build.BuildId)/logs?api-version=5.0' | ConvertFrom-Json
+            $lastTwoLogUrls = $json.value[-1..-2].url
+            foreach($logUrl in $lastTwoLogUrls)
+            {
+              Write-Host $logUrl
+              $logText = Invoke-WebRequest $logUrl
+              if ($logText -like '*: GitHub Release*') 
+              {
+                $successCount = (Select-String "Uploaded file successfully:" -InputObject $logText -AllMatches).Matches.Count
+                $failureCount = (Select-String "Duplicate asset found:" -InputObject $logText -AllMatches).Matches.Count
+                Write-Host "Success count is: $successCount and failure count is: $failureCount"
+                if (($successCount -ne 7) -or ($failureCount -ne 0)) { Write-Host "##vso[task.complete result=Failed;]DONE" } 
+              }
+            }
+
